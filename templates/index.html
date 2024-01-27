@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myFireWall</title>
+</head>
+<body>
+    <h1>Firewall Management</h1>
+    <h2>차단 IP주소</h2>
+    <form action="/block_ip" method="POST">
+        <label for="ip">차단할 IP주소: </label>
+        <input type="text" id="ip" name="ip" required>
+        <button type="submit">차단</button>
+    </form>
+    <table>
+        <thead>
+            <tr>IP주소</tr>
+        </thead>
+        <tbody>
+            {% for ip in blocked_ips %}
+            <tr>
+                <td>{{ ip }}</td>
+                <td>
+                    <form action="{{ url_for('unblock_ip', ip=ip) }}", method="POST">
+                        <button type="submit">삭제</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
