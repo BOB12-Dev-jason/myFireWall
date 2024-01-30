@@ -19,6 +19,17 @@
     <h1>Firewall Management</h1>
 
     <h2>방화벽 정책 현황</h2>
+    <form action="{{ url_for('add_rule', protocol=protocol, sip=sip, dip=dip, target=target) }}" method="POST">
+        <label for="ip">프로토콜: </label>
+        <input type="text" id="protocol" name="protocol" required>
+        <label for="ip">source IP: </label>
+        <input type="text" id="sip" name="sip" required>
+        <label for="ip">destination IP: </label>
+        <input type="text" id="dip" name="dip" required>
+        <label for="ip">target</label>
+        <input type="text" id="target" name="target" required>
+        <button type="submit">추가</button>
+    </form>
     <table>
         <thead>
             <tr>

@@ -13,11 +13,26 @@ def home():
     return render_template("index.html", iptables_info=ut.get_iptables_info() ,blocked_ips=blocked_ips, conn_info=ut.get_conntrack_info())
 
 
+@app.route("/add_rule/<chain>/<protocol>/<sip>/<dip>/<target>")
+def add_rule(procotol, chain, sip, dip, target):
+    if target=="LOG":
+        command = f"sudo iptables -A FORWARD -s {sip} -j LOG --log-prefix 'DROP: ' --log-level 4"
+    else:
+        command = f"sudo iptables -A {chain} -s {sip} -d {dip} -p {procotol} -m conntrack --ctstate NEW,ESTABLISHED -j {target}"
+    
+    print("add_rule command:",command)
+    subprocess.run(command, shell=True)
+    return redirect("/")
+
+
 @app.route("/delete_rule/<protocol>/<sip>/<target>", methods=["POST"])
 def delete_rule(protocol, sip, target):
     dip = request.form.get('dip')
-    command = f"sudo iptables -D FORWARD -s {sip} -d {dip} -p {protocol} -m conntrack --ctstate NEW,ESTABLISHED -j {target}"
-    print(command)
+    if target=="DROP":
+        command = f"sudo iptables -D FORWARD -s {sip} -d {dip} -p {protocol} -m conntrack --ctstate NEW,ESTABLISHED -j {target}"
+    elif target=="LOG":
+        command = f"sudo iptables -D FORWARD -s {sip} -j LOG --log-prefix 'DROP: ' --log-level 4"
+    print("delete_rule command:",command)
     subprocess.run(command, shell=True)
     return redirect("/")
 
@@ -29,7 +44,10 @@ def block_ip():
     blocked_ips.append(ip_to_block)
 
     command = f"sudo iptables -A FORWARD -s {ip_to_block} -m conntrack --ctstate NEW,ESTABLISHED -j DROP"
+    log_command = f"sudo iptables -A FORWARD -s {ip_to_block} -j LOG --log-prefix 'DROP: ' --log-level 4"
+    print("block_ip command:", command + '\n' + log_command)
     subprocess.run(command, shell=True)
+    subprocess.run(log_command, shell=True)
 
     return redirect("/")
 
@@ -38,8 +56,11 @@ def block_ip():
 def unblock_ip(ip):
     blocked_ips.remove(ip)
 
-    command = f"sudo iptables -D FORWARD -s {ip} -j DROP"
+    command = f"sudo iptables -D FORWARD -s {ip} -m conntrack --ctstate NEW,ESTABLISHED -j DROP"
+    log_command = f"sudo iptables -D FORWARD -s {ip} -j LOG --log-prefix 'DROP: ' --log-level 4"
+    print("unblock_ip command:", command + '\n' + log_command)
     subprocess.run(command, shell=True)
+    subprocess.run(log_command, shell=True)
 
     return redirect("/")
 
