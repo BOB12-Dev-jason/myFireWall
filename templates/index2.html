@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myFireWall</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Firewall Management</h1>
+
+        <h2>방화벽 정책 현황</h2>
+        <form action="{{ url_for('add_rule') }}" method="POST" class="mb-4">
+            <div class="form-row">
+                <div class="col-1">
+                    <input type="text" class="form-control" id="index" name="index" required placeholder="index">
+                </div>
+                <div class="col-1">
+                    <select id="protocol" name="protocol" class="form-control" required>
+                        <option value="TCP">TCP</option>
+                        <option value="UDP">UDP</option>
+                        <option value="all">ALL</option>
+                    </select>
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="sip1" name="sip1" required placeholder="sip1">
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="sip2" name="sip2" required placeholder="sip2">
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="sip3" name="sip3" required placeholder="sip3">
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="sip4" name="sip4" required placeholder="sip4">
+                </div>
+                <div class="col-1">
+                    <select id="smask" name="smask" class="form-control" required>
+                        <option value="0">0</option>
+                        <option value="8">8</option>
+                        <option value="16">16</option>
+                        <option value="24">24</option>
+                        <option value="32">32</option>
+                    </select>
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="dip1" name="dip1" required placeholder="dip1">
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="dip2" name="dip2" required placeholder="dip2">
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="dip3" name="dip3" required placeholder="dip3">
+                </div>
+                <div class="col-1">
+                    <input type="text" class="form-control" id="dip4" name="dip4" required placeholder="dip4">
+                </div>
+                <div class="col-1">
+                    <select id="dmask" name="dmask" class="form-control" required>
+                        <option value="0">0</option>
+                        <option value="8">8</option>
+                        <option value="16">16</option>
+                        <option value="24">24</option>
+                        <option value="32">32</option>
+                    </select>
+                </div>
+                <div class="col-1">
+                    <select id="target" name="target" class="form-control" required onchange="toggleLogFields()">
+                        <option value="DROP">DROP</option>
+                        <option value="ACCEPT">ACCEPT</option>
+                        <option value="LOG">LOG</option>
+                    </select>
+                </div>
+                <div class="col-1">
+                    <select id="replace" name="replace" class="form-control" required>
+                        <option value="n">추가</option>
+                        <option value="y">대체</option>
+                    </select>
+                </div>
+                <div class="col-1">
+                    <button type="submit" class="btn btn-primary">규칙 생성</button>
+                </div>
+            </div>
+        </form>
+
+        <div id="logFields" style="display: none;">
+            <div class="form-group">
+                <label for="logPrefix">Log Prefix: </label>
+                <input type="text" class="form-control" id="logPrefix" name="logPrefix">
+            </div>
+            <div class="form-group">
+                <label for="logLevel">Log Level: </label>
+                <select id="logLevel" name="logLevel" class="form-control" required>
+                    <option value="7">7 (Debug)</option>
+                    <option value="6">6 (Info)</option>
+                    <option value="5">5 (Notice)</option>
+                    <option value="4">4 (Warning)</option>
+                    <option value="3">3 (Error)</option>
+                    <option value="2">2 (Critical)</option>
+                    <option value="1">1 (Alert)</option>
+                    <option value="0">0 (Emergency)</option>
+                </select>
+            </div>
+        </div>
+
+        <script>
+            function toggleLogFields() {
+                var target = document.getElementById('target').value;
+                var logFields = document.getElementById('logFields');
+                if (target === 'LOG') {
+                    logFields.style.display = 'block';
+                } else {
+                    logFields.style.display = 'none';
+                }
+            }
+        </script>
+
+        <!-- 테이블에 Bootstrap 클래스 적용 -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>proto</th>
+                    <th>sip</th>
+                    <th>dip</th>
+                    <th>target</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for target, protocol, sip, dip in iptables_info %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ protocol }}</td>
+                    <td>{{ sip }}</td>
+                    <td>{{ dip }}</td>
+                    <td>{{ target }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_rule', index=loop.index) }}", method="POST">
+                            <button type="submit" class="btn btn-danger">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>IP주소 차단 현황</h2>
+        <form action="/block_ip" method="POST" class="mb-4">
+            <div class="form-group">
+                <label for="ip">차단할 IP주소: </label>
+                <input type="text" class="form-control" id="ip" name="ip" required>
+                <button type="submit" class="btn btn-warning mt-2">차단</button>
+            </div>
+        </form>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>차단 IP 목록</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ip in blocked_ips %}
+                <tr>
+                    <td>{{ ip }}</td>
+                    <td>
+                        <form action="{{ url_for('unblock_ip', ip=ip) }}", method="POST">
+                            <button type="submit" class="btn btn-danger">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>세션 테이블</h2>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>protocol</th>
+                    <th>source ip</th>
+                    <th>destination ip</th>
+                    <th>source port</th>
+                    <th>destination port</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for protocol, src_ip, dst_ip, sport, dport in conn_info %}
+                <tr>
+                    <td>{{ protocol }}</td>
+                    <td>{{ src_ip }}</td>
+                    <td>{{ dst_ip }}</td>
+                    <td>{{ sport }}</td>
+                    <td>{{ dport }}</td>
+                    <td>
+                        <form action="{{ url_for('remove_connect', protocol=protocol, sport=sport, dport=dport) }}", method="POST">
+                            <button type="submit" class="btn btn-danger">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>시스템 로그</h2>
+        <form action="{{ url_for('search_logs') }}" method="POST" class="mb-4">
+            <div class="form-group">
+                <label for="search_log">로그 검색: </label>
+                <input type="text" class="form-control" id="keyword" name="keyword">
+                <button type="submit" class="btn btn-info mt-2">검색</button>
+            </div>
+        </form>
+
+        <table class="table table-dark">
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

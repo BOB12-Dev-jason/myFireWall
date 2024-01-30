@@ -22,10 +22,22 @@ def get_iptables_info():
 
     infos = []
 
-    pattern = r"\s+0\s+0\s+(\S+)\s+(\S+)\s+--\s+\*\s+\*\s+(\S+)\s+(\S+/\d+)"
     for line in result:
-        match = re.search(pattern, line)
-        if match:
-            infos.append(match.groups())
+        words = line.split()
+        if len(words) > 7 and words[0].isdigit() and words[1].isdigit():
+            infos.append((words[2], words[3], words[7], words[8])) # target, protocol, src, dst
     
+    print(infos)
     return infos
+
+
+def get_dmesg_logs(keyword=""):
+    print("keyword:", keyword)
+    if keyword=="":
+        command = "sudo dmesg -T | tail -n 10"
+    else:
+        command = f"sudo dmesg -T | tail -n 10 | grep {keyword}"
+
+    result = subprocess.run(command, shell=True, capture_output=True, text=True).stdout.split('\n')
+
+    return result

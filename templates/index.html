@@ -19,20 +19,97 @@
     <h1>Firewall Management</h1>
 
     <h2>방화벽 정책 현황</h2>
-    <form action="{{ url_for('add_rule', protocol=protocol, sip=sip, dip=dip, target=target) }}" method="POST">
-        <label for="ip">프로토콜: </label>
-        <input type="text" id="protocol" name="protocol" required>
-        <label for="ip">source IP: </label>
-        <input type="text" id="sip" name="sip" required>
-        <label for="ip">destination IP: </label>
-        <input type="text" id="dip" name="dip" required>
-        <label for="ip">target</label>
-        <input type="text" id="target" name="target" required>
-        <button type="submit">추가</button>
+    <form action="{{ url_for('add_rule') }}" method="POST">
+        <label for="index">index: </label>
+        <input type="text" id="index" name="index" required style="width: 30px;">
+
+        <label for="protocol">protocol: </label>
+        <select id="protocol" name="protocol" required>
+            <option value="TCP">TCP</option>
+            <option value="UDP">UDP</option>
+            <option value="all">ALL</option>
+        </select>
+
+        <label for="sip">source IP: </label>
+        <input type="text" id="sip1" name="sip1" required style="width: 30px;">.
+        <input type="text" id="sip2" name="sip2" required style="width: 30px;">.
+        <input type="text" id="sip3" name="sip3" required style="width: 30px;">.
+        <input type="text" id="sip4" name="sip4" required style="width: 30px;">
+
+        <label for="smask">/</label>
+        <select id="smask" name="smask" required>
+            <option value="0">0</option>
+            <option value="8">8</option>
+            <option value="16">16</option>
+            <option value="24">24</option>
+            <option value="32">32</option>
+        </select>
+
+        <label for="dip">destination IP: </label>
+        <input type="text" id="dip1" name="dip1" required style="width: 30px;">.
+        <input type="text" id="dip2" name="dip2" required style="width: 30px;">.
+        <input type="text" id="dip3" name="dip3" required style="width: 30px;">.
+        <input type="text" id="dip4" name="dip4" required style="width: 30px;">
+        
+        <label for="dmask">/</label>
+        <select id="dmask" name="dmask" required>
+            <option value="0">0</option>
+            <option value="8">8</option>
+            <option value="16">16</option>
+            <option value="24">24</option>
+            <option value="32">32</option>
+        </select>
+
+        <label for="target">target</label>
+        <select id="target" name="target" required onchange="toggleLogFields()">
+            <option value="DROP">DROP</option>
+            <option value="ACCEPT">ACCEPT</option>
+            <option value="LOG">LOG</option>
+        </select>
+
+        <select id="replace" name="replace" required>
+            <option value="n">추가</option>
+            <option value="y">대체</option>
+        </select>
+
+        <!-- 로그 정보 입력 창. LOG 선택 시에만 나타나도록 설정. -->
+        <div id="logFields" style="display: none;">
+            <label for="logPrefix">Log Prefix: </label>
+            <input type="text" id="logPrefix" name="logPrefix">
+    
+            <label for="logLevel">Log Level: </label>
+            <select id="logLevel" name="logLevel" required>
+                <option value="7">7 (Debug)</option>
+                <option value="6">6 (Info)</option>
+                <option value="5">5 (Notice)</option>
+                <option value="4">4 (Warning)</option>
+                <option value="3">3 (Error)</option>
+                <option value="2">2 (Critical)</option>
+                <option value="1">1 (Alert)</option>
+                <option value="0">0 (Emergency)</option>
+            </select>
+        </div>
+
+        <button type="submit">규칙 생성</button>
     </form>
+
+    <!-- 로그 정보 입력 창 script -->
+    <script>
+        function toggleLogFields() {
+            var target = document.getElementById('target').value;
+            var logFields = document.getElementById('logFields');
+            if (target === 'LOG') {
+                logFields.style.display = 'block';
+            } else {
+                logFields.style.display = 'none';
+            }
+        }
+    </script>
+
     <table>
         <thead>
             <tr>
+                <th>#</th>
                 <th>proto</th>
                 <th>sip</th>
                 <th>dip</th>
@@ -42,13 +119,13 @@
         <tbody>
             {% for target, protocol, sip, dip in iptables_info %}
             <tr>
+                <td>{{ loop.index }}</td>
                 <td>{{ protocol }}</td>
                 <td>{{ sip }}</td>
                 <td>{{ dip }}</td>
                 <td>{{ target }}</td>
                 <td>
-                    <form action="{{ url_for('delete_rule', protocol=protocol, sip=sip, target=target) }}", method="POST">
-                        <input type="hidden" name="dip" value="{{ dip }}">
+                    <form action="{{ url_for('delete_rule', index=loop.index) }}", method="POST">
                         <button type="submit">삭제</button>
                     </form>
                 </td>
@@ -68,7 +145,7 @@
     <br>
     <table>
         <thead>
-            <tr>IP주소
+            <tr>차단 IP 목록
                 <br>
                 <!-- IP주소 검색 -->
                 <form action="/search_ip" method="GET">
@@ -122,5 +199,30 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <hr>
+
+    <h2>시스템 로그</h2>
+    <table>
+        <thead>
+            <tr>로그 검색
+                <br>
+                <!-- 로그 검색 -->
+                <form action="{{ url_for('search_logs') }}" method="POST">
+                    <label for="search_log">검색: </label>
+                    <input type="text" id="keyword" name="keyword" style="margin-right: 10px;">
+                    <button type="submit">검색</button>
+                </form>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 </body>
 </html>
