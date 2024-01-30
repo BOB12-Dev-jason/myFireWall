@@ -4,18 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>myFireWall</title>
+    <style>
+        table, th, td {
+            
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
     <h1>Firewall Management</h1>
-    <h2>차단 IP주소</h2>
+
+    <h2>방화벽 정책 현황</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>proto</th>
+                <th>sip</th>
+                <th>dip</th>
+                <th>target</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for target, protocol, sip, dip in iptables_info %}
+            <tr>
+                <td>{{ protocol }}</td>
+                <td>{{ sip }}</td>
+                <td>{{ dip }}</td>
+                <td>{{ target }}</td>
+                <td>
+                    <form action="{{ url_for('delete_rule', protocol=protocol, sip=sip, target=target) }}", method="POST">
+                        <input type="hidden" name="dip" value="{{ dip }}">
+                        <button type="submit">삭제</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>IP주소 차단 현황</h2>
     <form action="/block_ip" method="POST">
         <label for="ip">차단할 IP주소: </label>
         <input type="text" id="ip" name="ip" required>
         <button type="submit">차단</button>
     </form>
+    <br>
     <table>
         <thead>
-            <tr>IP주소</tr>
+            <tr>IP주소
+                <br>
+                <!-- IP주소 검색 -->
+                <form action="/search_ip" method="GET">
+                    <label for="search_ip">검색: </label>
+                    <input type="text" id="search_ip" name="search_ip" style="margin-right: 10px;">
+                    <button type="submit">검색</button>
+                </form>
+            </tr>
         </thead>
         <tbody>
             {% for ip in blocked_ips %}
@@ -23,6 +73,37 @@
                 <td>{{ ip }}</td>
                 <td>
                     <form action="{{ url_for('unblock_ip', ip=ip) }}", method="POST">
+                        <button type="submit">삭제</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>세션 테이블</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>protocol</th>
+                <th>source ip</th>
+                <th>destination ip</th>
+                <th>source port</th>
+                <th>destination port</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for protocol, src_ip, dst_ip, sport, dport in conn_info %}
+            <tr>
+                <td>{{ protocol }}</td>
+                <td>{{ src_ip }}</td>
+                <td>{{ dst_ip }}</td>
+                <td>{{ sport }}</td>
+                <td>{{ dport }}</td>
+                <td>
+                    <form action="{{ url_for('remove_connect', protocol=protocol, sport=sport, dport=dport) }}", method="POST">
                         <button type="submit">삭제</button>
                     </form>
                 </td>
