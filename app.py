@@ -1,12 +1,15 @@
 from flask import Flask, render_template, request, redirect
 import subprocess
 
+import nfqueue as nfq
 import myutils as ut
 
 app = Flask(__name__)
 
 blocked_ips = []
 system_logs = ut.get_dmesg_logs()
+log_search_keyword = ''
+webfw_status = "활성화"
 
 @app.route("/")
 def home():
@@ -14,7 +17,9 @@ def home():
                            iptables_info = ut.get_iptables_info(),
                            blocked_ips = blocked_ips,
                            conn_info = ut.get_conntrack_info(),
-                           logs = system_logs)
+                           logs = system_logs,
+                           log_search_keyword = log_search_keyword,
+                           webfw_status = webfw_status)
 
 
 @app.route("/add_rule", methods=["POST"])
@@ -33,11 +38,14 @@ def add_rule():
     target = request.form.get('target')
     replace = request.form.get('replace')
 
+    logPrefix = request.form.get('logPrefix')
+    logLevel = request.form.get('logLevel')
+
     if target=="LOG":
         if replace == 'n':
-            command = f"sudo iptables -I FORWARD {index} -s {sip} -d {dip} -j LOG --log-prefix 'FWLOG: ' --log-level 4"
+            command = f"sudo iptables -I FORWARD {index} -s {sip} -d {dip} -j LOG --log-prefix '{logPrefix} ' --log-level {logLevel}"
         elif replace == 'y':
-            command = f"sudo iptables -R FORWARD {index} -s {sip} -d {dip} -j LOG --log-prefix 'FWLOG: ' --log-level 4"
+            command = f"sudo iptables -R FORWARD {index} -s {sip} -d {dip} -j LOG --log-prefix '{logPrefix} ' --log-level {logLevel}"
     else:
         if replace == 'n':
             command = f"sudo iptables -I FORWARD {index} -s {sip} -d {dip} -p {protocol} -m conntrack --ctstate NEW,ESTABLISHED -j {target}"
@@ -87,6 +95,25 @@ def unblock_ip(ip):
     return redirect("/")
 
 
+@app.route("/active_webfw", methods=["GET"])
+def active_webfw():
+    global webfw_status
+    status = request.form.get("status")
+    print(status)
+    if status == "active":
+        command = "iptables -A FORWARD -p tcp --dport 80 -j NFQUEUE --queue-num 0"
+        webfw_status = "비활성화"
+        nfq.bindQueue()
+    else:
+        command = "iptables -D FORWARD -p tcp --dport 80 -j NFQUEUE --queue-num 0"
+        webfw_status = "활성화"
+        nfq.unbindQueue()
+    subprocess.run(command, shell=True)
+    
+    # webfw_status = status
+    return redirect("/")
+
+
 @app.route("/search_ip/<search_ip>", methods=["GET"])
 def search_ip(search_ip):
     return redirect("/")
@@ -103,10 +130,11 @@ def remove_connect(protocol, sport, dport):
 
 @app.route("/search_logs", methods=["POST"])
 def search_logs():
-    global system_logs
+    global system_logs, log_search_keyword
     keyword = request.form.get('keyword')
     print("keyword:", keyword)
     system_logs = ut.get_dmesg_logs(keyword)
+    log_search_keyword = keyword
     return redirect("/")
 
 

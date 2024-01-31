@@ -16,6 +16,28 @@ def get_conntrack_info():
     return infos
 
 
+# def check_rules(rules):
+#     rule_set = []
+
+#     for i in range(len(rules)):
+#         if i==0:
+#             rule_set.append((rules[i], "yes"))
+
+#         current_rule = (rules[i][1], rules[i][2], rules[i][3])
+
+#         for j in range(i+1, len(rules)):
+#             next_rule = (rules[j][1], rules[j][2], rules[j][3])
+#             print("next_rule", next_rule)
+
+#             if current_rule == next_rule: # protocol, src, dst가 같다면
+#                 if rules[i][0] == 'DROP':
+#                     rule_set.append((rules[j], "no"))
+#                 else:
+#                     rule_set.append((rules[j], "yes"))
+    
+#     print(rule_set)
+
+
 def get_iptables_info():
     command = "sudo iptables -nvL"
     result = subprocess.run(command, shell=True, capture_output=True, text=True).stdout.split('\n')
@@ -28,6 +50,7 @@ def get_iptables_info():
             infos.append((words[2], words[3], words[7], words[8])) # target, protocol, src, dst
     
     print(infos)
+    #  check_rules(infos)
     return infos
 
 
@@ -41,3 +64,5 @@ def get_dmesg_logs(keyword=""):
     result = subprocess.run(command, shell=True, capture_output=True, text=True).stdout.split('\n')
 
     return result
+
+

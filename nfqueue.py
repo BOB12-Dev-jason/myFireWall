@@ -1,5 +1,6 @@
 from netfilterqueue import NetfilterQueue
 from scapy.all import IP, TCP, Raw
+import threading
 
 # NetfilterQueue 인스턴스 생성
 nfqueue = NetfilterQueue()
@@ -35,14 +36,24 @@ def packet_handler(packet):
     packet.accept()
 
 
-# 만든 큐를 커널에 등록해야 함
-# 0번 큐에 nfqueue를 등록하고, 패킷이 담기면 packet_handler를 호출하도록 설정.
-nfqueue.bind(0, packet_handler)
+def runQueue():
+    nfqueue.run()
 
-# 아래 코드를 실행한 뒤 대기
-nfqueue.run()
 
-# 종료 코드
-print("종료중..")
-nfqueue.unbind()
+def unbindQueue():
+    # 종료 코드
+    print("종료중..")
+    nfqueue.unbind()
+
+
+def bindQueue():
+    # 만든 큐를 커널에 등록해야 함
+    # 0번 큐에 nfqueue를 등록하고, 패킷이 담기면 packet_handler를 호출하도록 설정.
+    nfqueue.bind(0, packet_handler)
+    # 아래 코드를 실행한 뒤 대기
+    thread = threading.Thread(target=runQueue)
+    thread.start()
+
+
+
 

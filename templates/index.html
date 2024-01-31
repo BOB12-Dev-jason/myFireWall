@@ -171,6 +171,30 @@
 
     <hr>
 
+    <h2>웹 방화벽</h2>
+    
+    <form id="webfwForm" action="{{ url_for('active_webfw') }}" method="GET">
+        <input type="hidden" id="status" name="status" value="active">
+        <button id="webfw" onclick="toggleButton()">{{ '비활성화' if webfw_status == 'active' else '활성화' }}</button>
+    </form>
+
+    <script>
+        function toggleButton() {
+            var btn = document.getElementById("webfw");
+            var statusInput = document.getElementById("status");
+            if (btn.textContent === "활성화") {
+                btn.textContent = "비활성화";
+                statusInput.value = "active";
+            } else {
+                btn.textContent = "활성화";
+                statusInput.value = "inactive";
+            }
+            document.getElementById("webfwForm").submit();
+        }
+    </script>
+
+    <hr>
+
     <h2>세션 테이블</h2>
     <table>
         <thead>
@@ -210,7 +234,7 @@
                 <!-- 로그 검색 -->
                 <form action="{{ url_for('search_logs') }}" method="POST">
                     <label for="search_log">검색: </label>
-                    <input type="text" id="keyword" name="keyword" style="margin-right: 10px;">
+                    <input type="text" id="keyword" name="keyword" value="{{ log_search_keyword }}" style="margin-right: 10px;">
                     <button type="submit">검색</button>
                 </form>
             </tr>
