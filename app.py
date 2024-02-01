@@ -112,10 +112,6 @@ def active_webfw():
     return redirect("/")
 
 
-@app.route("/search_ip/<search_ip>", methods=["GET"])
-def search_ip(search_ip):
-    return redirect("/")
-
 
 @app.route("/remove_connect/<protocol>/<sport>/<dport>", methods=["POST"])
 def remove_connect(protocol, sport, dport):
