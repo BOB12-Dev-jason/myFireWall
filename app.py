@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect
 import subprocess
 
-import nfqueue as nfq
+import webfw_nfq as nfq
 import myutils as ut
 
 app = Flask(__name__)
@@ -9,7 +9,7 @@ app = Flask(__name__)
 blocked_ips = []
 system_logs = ut.get_dmesg_logs()
 log_search_keyword = ''
-webfw_status = "활성화"
+webfw_active = False
 
 @app.route("/")
 def home():
@@ -19,7 +19,7 @@ def home():
                            conn_info = ut.get_conntrack_info(),
                            logs = system_logs,
                            log_search_keyword = log_search_keyword,
-                           webfw_status = webfw_status)
+                           webfw_status = 'active' if webfw_active else 'inactive')
 
 
 @app.route("/add_rule", methods=["POST"])
@@ -95,22 +95,20 @@ def unblock_ip(ip):
     return redirect("/")
 
 
-@app.route("/active_webfw", methods=["GET"])
+@app.route("/active_webfw", methods=["POST"])
 def active_webfw():
-    global webfw_status
-    status = request.form.get("status")
+    global webfw_active
+    webfw_active = not webfw_active
+    status = request.form.get("fwstatus")
     print(status)
     if status == "active":
         command = "iptables -A FORWARD -p tcp --dport 80 -j NFQUEUE --queue-num 0"
-        webfw_status = "비활성화"
         nfq.bindQueue()
     else:
         command = "iptables -D FORWARD -p tcp --dport 80 -j NFQUEUE --queue-num 0"
-        webfw_status = "활성화"
         nfq.unbindQueue()
     subprocess.run(command, shell=True)
     
-    # webfw_status = status
     return redirect("/")
 
 

@@ -173,20 +173,18 @@
 
     <h2>웹 방화벽</h2>
     
-    <form id="webfwForm" action="{{ url_for('active_webfw') }}" method="GET">
-        <input type="hidden" id="status" name="status" value="active">
-        <button id="webfw" onclick="toggleButton()">{{ '비활성화' if webfw_status == 'active' else '활성화' }}</button>
+    <form id="webfwForm" action="{{ url_for('active_webfw') }}" method="POST">
+        <input type="hidden" id="fwstatus" name="fwstatus">
+        <button type="button" id="webfwbutton" onclick="toggleButton()">{{ '비활성화' if webfw_status == 'active' else '활성화' }}</button>
     </form>
-
+    
     <script>
         function toggleButton() {
-            var btn = document.getElementById("webfw");
-            var statusInput = document.getElementById("status");
+            var btn = document.getElementById("webfwbutton");
+            var statusInput = document.getElementById("fwstatus");
             if (btn.textContent === "활성화") {
-                btn.textContent = "비활성화";
                 statusInput.value = "active";
             } else {
-                btn.textContent = "활성화";
                 statusInput.value = "inactive";
             }
             document.getElementById("webfwForm").submit();
